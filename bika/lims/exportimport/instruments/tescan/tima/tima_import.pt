@@ -1,0 +1,4 @@
+<label for="upload_file">File<label>
+<input type="file" name="upload_file" /><br />
+
+<input name="firstsubmit" type="submit" value="Submit" i18n:attributes="value"/>
