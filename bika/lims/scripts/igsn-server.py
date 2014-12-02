@@ -1,6 +1,12 @@
-import os, sys, getopt, cgi
+import os
+import sys
+import getopt
+import urlparse
+import urllib
+import urllib2
 import BaseHTTPServer
 from cPickle import Pickler, Unpickler
+
 
 class IDRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -14,7 +20,6 @@ class IDRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.end_headers()
             raise
     do_GET = run
-    # do_POST = run
 
     def getCounter(self, key):
         # initialise counter
@@ -36,27 +41,70 @@ class IDRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         p.dump(self._counters)
         f.close()
 
+    def register_igsn(self, igsn):
+        username = 'adam.brown@evbane.com'
+        password = 'n9B@Bb00O5JyZ!Np'
+
+        xml_content = '''
+<samples>
+    <sample>
+        <user_code>%(user_code)</user_code>
+        <sample_type>Individual Sample</sample_type>
+        <material>Rock</material>
+        <igsn>%(igsn)</igsn>
+        <name>TestSample123</name>
+        <classification>Igneous>Plutonic>Felsic</classification>
+        <description>arkose</description>
+        <age_min>6.5</age_min>
+        <age_max>13</age_max>
+        <collection_method>Grab</collection_method>
+        <latitude>35.5134</latitude>
+        <longitude>-117.3463</longitude>
+        <elevation>781.4</elevation>
+        <primary_location_name>Lava Mountains, Mojave Desert, California</primary_location_name>
+        <country>United States</country>
+        <province>California</province>
+        <county>San Bernardino</county>
+        <collector>J. E. Andrew</collector>
+        <collection_start_date>January 01, 2010</collection_start_date>
+        <original_archive>University of Kansas</original_archive>
+    </sample>
+</samples>''' % locals()
+
+        # 1. Sample registration web service
+        print 'Attempting sample registration'
+        sample_registration_service_url = 'http://app.geosamples.org/webservices/uploadservice.php'
+
+        http_body = urllib.urlencode({
+            'username': username,
+            'password': password,
+            'content': ''
+        })
+
+        http_headers = { 'Content-Type' : 'application/x-www-form-urlencoded' }
+        req = urllib2.Request(sample_registration_service_url, http_body, http_headers)
+        try:
+            handler = urllib2.urlopen(req)
+            print handler.getcode()
+            print handler.headers.getheader('content-type')
+            print handler.read()
+
+        except urllib2.HTTPError as httpError:
+            print httpError.read() # This might happen, for example, if the sample ID already exists.
+        print '\n'
+
     def get_id(self):
         batch_size = None
         command = self.command.lower() 
         if command == 'get' and self.path.find('?') != -1:
             key, qs = self.path.split('?', 1)
-            data = cgi.parse_qs(qs)
+            data = urlparse.parse_qs(qs)
             try:
                 batch_size = int(data['batch_size'][0])
             except:
                 batch_size = None
         else:
             key = self.path
-
-        # POST (also works .. let's GET for now .. )
-        # elif command == 'post':
-        #     key = self.path
-        #     length = self.headers.getheader('content-length')
-        #     if length:
-        #         length = int(length)
-        #         qs = self.rfile.read(length)
-        #         data = cgi.parse_qs(qs)
 
         prev_count = self.getCounter(key)
         next_count = prev_count + 1
@@ -69,8 +117,17 @@ class IDRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'text/plain')
         self.end_headers()
 
+        # Register IGSN here:
+        next_igsn = "IEEVB" + base36encode(next_count).zfill(4)
+
+        self.register_igsn()
+
+
+
+
+
         # TODO: Prefix needs to be configurable.
-        self.wfile.write("IEEVB" + base36encode(next_count).zfill(4))
+        self.wfile.write(next_igsn)
 
 
 def base36encode(number, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'):
@@ -93,9 +150,11 @@ def base36encode(number, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'):
         base36 = alphabet[i] + base36
  
     return sign + base36
- 
+
+
 def base36decode(number):
     return int(number, 36)
+
 
 # Copied and modified roundup-server code - thanks Richard Jones
 def usage(message=''):
@@ -125,6 +184,7 @@ id-server [-f counter] [-n hostname] [-p port] [-l file] [-d file]
 '''%locals()
     sys.exit(0)
 
+
 def abspath(path):
     ''' Make the given path an absolute path.
 
@@ -133,6 +193,7 @@ def abspath(path):
     if not os.path.isabs(path):
         path = os.path.join(os.getcwd(), path)
     return os.path.normpath(path)
+
 
 def daemonize(pidfile):
     ''' Turn this process into a daemon.
@@ -168,6 +229,7 @@ def daemonize(pidfile):
     os.dup2(devnull, 0)
     os.dup2(devnull, 1)
     os.dup2(devnull, 2)
+
 
 def run():
     ''' Script entry point - handle args and figure out what to to.
