@@ -7,6 +7,10 @@ import urllib2
 import BaseHTTPServer
 from cPickle import Pickler, Unpickler
 
+from sesarwslib import categories as cat
+from sesarwslib.sample import Sample
+import sesarwslib.sesarwsclient as ws
+import os
 
 class IDRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -42,56 +46,7 @@ class IDRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         f.close()
 
     def register_igsn(self, igsn):
-        username = 'adam.brown@evbane.com'
-        password = 'n9B@Bb00O5JyZ!Np'
-
-        xml_content = '''
-<samples>
-    <sample>
-        <user_code>%(user_code)</user_code>
-        <sample_type>Individual Sample</sample_type>
-        <material>Rock</material>
-        <igsn>%(igsn)</igsn>
-        <name>TestSample123</name>
-        <classification>Igneous>Plutonic>Felsic</classification>
-        <description>arkose</description>
-        <age_min>6.5</age_min>
-        <age_max>13</age_max>
-        <collection_method>Grab</collection_method>
-        <latitude>35.5134</latitude>
-        <longitude>-117.3463</longitude>
-        <elevation>781.4</elevation>
-        <primary_location_name>Lava Mountains, Mojave Desert, California</primary_location_name>
-        <country>United States</country>
-        <province>California</province>
-        <county>San Bernardino</county>
-        <collector>J. E. Andrew</collector>
-        <collection_start_date>January 01, 2010</collection_start_date>
-        <original_archive>University of Kansas</original_archive>
-    </sample>
-</samples>''' % locals()
-
-        # 1. Sample registration web service
-        print 'Attempting sample registration'
-        sample_registration_service_url = 'http://app.geosamples.org/webservices/uploadservice.php'
-
-        http_body = urllib.urlencode({
-            'username': username,
-            'password': password,
-            'content': ''
-        })
-
-        http_headers = { 'Content-Type' : 'application/x-www-form-urlencoded' }
-        req = urllib2.Request(sample_registration_service_url, http_body, http_headers)
-        try:
-            handler = urllib2.urlopen(req)
-            print handler.getcode()
-            print handler.headers.getheader('content-type')
-            print handler.read()
-
-        except urllib2.HTTPError as httpError:
-            print httpError.read() # This might happen, for example, if the sample ID already exists.
-        print '\n'
+        client.register_sample(sample)
 
     def get_id(self):
         batch_size = None
