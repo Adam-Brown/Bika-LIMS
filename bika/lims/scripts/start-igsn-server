@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Run with: sudo -H -u bikaidserver ./start-igsn-server
+
+if [ $(whoami) == "bikaidserver" ]
+then
+	source /usr/share/bika-id-server/.env_vars
+
+	bash -c 'python igsn-server.py \
+    	-p 8082 \
+    	-l /usr/share/bika-id-server/idserver.log \
+    	-d /usr/share/bika-id-server/idserver.pid'
+
+else
+	echo "Error: This script must be executed as bikaidserver."
+fi

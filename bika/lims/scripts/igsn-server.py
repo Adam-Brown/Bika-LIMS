@@ -1,22 +1,26 @@
-import os
 import sys
 import getopt
 import urlparse
-import urllib
-import urllib2
 import BaseHTTPServer
-from cPickle import Pickler, Unpickler
-
 from sesarwslib import categories as cat
 from sesarwslib.sample import Sample
 import sesarwslib.sesarwsclient as ws
 import os
 
+# TODO ADAM: Remove count_from
 class IDRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def run(self):
         try:
-            self.counter_file = os.environ.get('counter')
+            self.username = os.environ['SESAR_USERNAME']
+            self.password = os.environ['SESAR_PASSWORD']
+            self.user_code = os.environ['SESAR_USER_CODE']
+
+            self.client = ws.IgsnClient(self.username, self.password)
+
+            print self.path
+
+
             self.get_id()
         except:
             self.send_response(400)
@@ -24,29 +28,6 @@ class IDRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.end_headers()
             raise
     do_GET = run
-
-    def getCounter(self, key):
-        # initialise counter
-        try:
-            f = open(self.counter_file, 'r+')
-            self._counters = Unpickler(f).load()
-        except:
-            f = open(self.counter_file, 'w+')
-            self._counters = {}
-        f.close()
-        if not self._counters.has_key(key):
-            self._counters[key] = 0
-        return self._counters[key]
-
-    def setCounter(self, key, count):
-        self._counters[key] = count
-        f = open(self.counter_file, 'r+')
-        p = Pickler(f)
-        p.dump(self._counters)
-        f.close()
-
-    def register_igsn(self, igsn):
-        client.register_sample(sample)
 
     def get_id(self):
         batch_size = None
@@ -61,54 +42,20 @@ class IDRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         else:
             key = self.path
 
-        prev_count = self.getCounter(key)
-        next_count = prev_count + 1
-        if batch_size:
-            last_count = prev_count + batch_size
-        else:
-            last_count = next_count 
-        self.setCounter(key, last_count)
         self.send_response(200)
         self.send_header('Content-Type', 'text/plain')
         self.end_headers()
 
-        # Register IGSN here:
-        next_igsn = "IEEVB" + base36encode(next_count).zfill(4)
+        # TODO: THESE VALUES NEED TO BE PROVIDED BY BIKA:
+        sample = Sample.sample(
+            sample_type=cat.SampleType.IndividualSample,
+            user_code=self.user_code,
+            name='TestSample123',
+            material=cat.Material.Rock)
 
-        self.register_igsn()
+        igsn = self.client.register_sample(sample)
 
-
-
-
-
-        # TODO: Prefix needs to be configurable.
-        self.wfile.write(next_igsn)
-
-
-def base36encode(number, alphabet='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'):
-    """Converts an integer to a base36 string."""
-    if not isinstance(number, (int, long)):
-        raise TypeError('number must be an integer')
- 
-    base36 = ''
-    sign = ''
- 
-    if number < 0:
-        sign = '-'
-        number = -number
- 
-    if 0 <= number < len(alphabet):
-        return sign + alphabet[number]
- 
-    while number != 0:
-        number, i = divmod(number, len(alphabet))
-        base36 = alphabet[i] + base36
- 
-    return sign + base36
-
-
-def base36decode(number):
-    return int(number, 36)
+        self.wfile.write(igsn)
 
 
 # Copied and modified roundup-server code - thanks Richard Jones
@@ -116,9 +63,8 @@ def usage(message=''):
     if message:
         message = 'Error: %(error)s\n\n'%{'error': message}
     print '''%(message)sUsage:
-id-server [-f counter] [-n hostname] [-p port] [-l file] [-d file]
+id-server [-n hostname] [-p port] [-l file] [-d file]
 
-  -f: counter file
   -n: sets the host name
   -p: sets the port to listen on
   -l: sets a filename to log to (instead of stdout)
@@ -199,7 +145,6 @@ def run():
     pidfile = None
     logfile = None
     user = None
-    counter = None
     try:
         # handle the command-line args
         try:
@@ -208,8 +153,7 @@ def run():
             usage(str(e))
 
         for (opt, arg) in optlist:
-            if opt == '-f': counter = arg
-            elif opt == '-n': hostname = arg
+            if opt == '-n': hostname = arg
             elif opt == '-p': port = int(arg)
             elif opt == '-u': user = arg
             elif opt == '-d': pidfile = abspath(arg)
@@ -234,11 +178,6 @@ def run():
             # People can remove this check if they're really determined
             if not os.getuid() and user is None:
                 raise ValueError, "Can't run as root!"
-
-        if counter is None:
-            raise ValueError, "You have to specify the location of the counter file."
-        else:
-            os.environ['counter'] = counter
 
     except SystemExit:
         raise
