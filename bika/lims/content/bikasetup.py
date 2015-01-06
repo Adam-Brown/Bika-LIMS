@@ -490,6 +490,17 @@ ExternalIDServer = BooleanField(
             "Prefixes are configurable separately in each Bika site")
     )
 )
+ExternalIDServerOnlyForSamples = BooleanField(
+    'ExternalIDServerOnlyForSamples',
+    schemata="ID Server",
+    default=False,
+    widget=BooleanWidget(
+        label=_("Use external ID server only for samples"),
+        description=_(
+            "Check this box if the external ID server should only "
+            "be used for samples")
+    )
+)
 IDServerURL = StringField(
     'IDServerURL',
     schemata="ID Server",
@@ -544,6 +555,7 @@ schema = BikaFolderSchema.copy() + Schema((
     SampleIDPadding,
     ARIDPadding,
     ExternalIDServer,
+    ExternalIDServerOnlyForSamples,
     IDServerURL,
 ))
 

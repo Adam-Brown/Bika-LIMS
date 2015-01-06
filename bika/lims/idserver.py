@@ -16,6 +16,7 @@ import copy,re,urllib
 import plone.protect
 import transaction
 
+
 class IDServerUnavailable(Exception):
     pass
 
@@ -88,8 +89,14 @@ def generateUniqueId(context):
         # parent id is normalized already
         return "%s-P%s" % (context.aq_parent.id, partnr)
 
-    if context.bika_setup.getExternalIDServer():
+    use_external_id_server = context.bika_setup.getExternalIDServer()
+    use_external_id_server_only_for_samples = context.bika_setup.getExternalIDServerOnlyForSamples()
 
+    # Override the value of use_external_id_server if necessary.
+    if context.portal_type != "Sample" and use_external_id_server_only_for_samples:
+        use_external_id_server = False
+
+    if use_external_id_server:
         # if using external server
 
         for d in prefixes:
