@@ -67,6 +67,29 @@ schema = BikaSchema.copy() + Schema((
             render_own_label=True,
         ),
     ),
+    StringField('SampleName',
+        searchable=True,
+        mode="rw",
+        read_permission=permissions.View,
+        write_permission=permissions.ModifyPortalContent,
+        widget=StringWidget(
+            label=_("Sample Name"),
+            visible={'edit': 'invisible',
+                     'view': 'visible',
+                     'header_table': 'visible',
+                     'id_server': 'visible',  # Send this value to the ID server.
+                     'sample_registered': {'view': 'visible', 'edit': 'invisible'},
+                     'to_be_sampled':     {'view': 'visible', 'edit': 'invisible'},
+                     'sampled':           {'view': 'visible', 'edit': 'invisible'},
+                     'to_be_preserved':   {'view': 'visible', 'edit': 'invisible'},
+                     'sample_due':        {'view': 'visible', 'edit': 'invisible'},
+                     'sample_received':   {'view': 'visible', 'edit': 'invisible'},
+                     'expired':           {'view': 'visible', 'edit': 'invisible'},
+                     'disposed':          {'view': 'visible', 'edit': 'invisible'},
+                     },
+            render_own_label=True,
+        ),
+    ),
     StringField('ClientSampleID',
         searchable=True,
         mode="rw",
@@ -117,6 +140,7 @@ schema = BikaSchema.copy() + Schema((
             visible={'edit': 'visible',
                      'view': 'visible',
                      'header_table': 'visible',
+                     'id_server': 'visible',  # Send this value to the ID server.
                      'sample_registered': {'view': 'visible', 'edit': 'visible'},
                      'to_be_sampled':     {'view': 'visible', 'edit': 'invisible'},
                      'sampled':           {'view': 'visible', 'edit': 'invisible'},
@@ -735,6 +759,13 @@ class Sample(BaseFolder, HistoryAwareMixin):
         for ar in self.getAnalysisRequests():
             ar.Schema()['ClientReference'].set(ar, value)
         self.Schema()['ClientReference'].set(self, value)
+
+    def setSampleName(self, value, **kw):
+        """ Set the field on Analysis Requests.
+        """
+        for ar in self.getAnalysisRequests():
+            ar.Schema()['SampleName'].set(ar, value)
+        self.Schema()['SampleName'].set(self, value)
 
     def setClientSampleID(self, value, **kw):
         """ Set the field on Analysis Requests.

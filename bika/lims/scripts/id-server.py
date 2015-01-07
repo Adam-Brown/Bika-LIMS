@@ -1,5 +1,6 @@
-import os, sys, getopt, cgi
+import os, sys, getopt
 import BaseHTTPServer
+import urlparse
 from cPickle import Pickler, Unpickler
 
 class IDRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -41,7 +42,7 @@ class IDRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         command = self.command.lower() 
         if command == 'get' and self.path.find('?') != -1:
             key, qs = self.path.split('?', 1)
-            data = cgi.parse_qs(qs)
+            data = urlparse.parse_qs(qs)
             try:
                 batch_size = int(data['batch_size'][0])
             except:

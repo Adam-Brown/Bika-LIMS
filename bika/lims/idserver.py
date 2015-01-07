@@ -26,17 +26,36 @@ def idserver_generate_id(context, prefix, batch_size = None):
     plone = context.portal_url.getPortalObject()
     url = context.bika_setup.getIDServerURL()
 
+    query = {'batch_size': batch_size} if batch_size else {}
+    for field in context.schema.fields():
+        isVisibleDelegate = field.widget.isVisible
+        if isVisibleDelegate(field, 'id_server', 'invisible') == 'visible':
+            # TODO: I couldn't find a better way to get the name out of the Field...
+            obj_str = str(field)  # e.g: '<Field id(string:rw)>'
+            field_name = obj_str[obj_str.index(' ')+1:obj_str.index('(')]
+
+            # TODO: This feels dirty but I don't know how to dynamically call the accessor.
+            reference = None
+            exec 'reference = context.' + field.accessor + '()'
+
+            # TODO: I don't know about other types. I think bool and ints can probably be
+            # accessed in the same was as strings...
+            value = ''
+            if type(reference) is str:
+                value = context[field_name]
+            else:
+                value = reference.title
+
+            query[field_name] = value
     try:
-        if batch_size:
-            # GET
-            f = urllib.urlopen('%s/%s/%s?%s' % (
-                    url,
-                    plone.getId(),
-                    prefix,
-                    urllib.urlencode({'batch_size': batch_size}))
-                    )
-        else:
-            f = urllib.urlopen('%s/%s/%s'%(url, plone.getId(), prefix))
+        # GET
+        f = urllib.urlopen('%s/%s/%s%s%s' % (
+                url,
+                plone.getId(),
+                prefix,
+                "?" if query else "",
+                urllib.urlencode(query)))
+
         new_id = f.read()
         f.close()
     except:
@@ -172,13 +191,15 @@ def generateUniqueId(context):
         # no prefix; use portal_type
         # no year inserted here
         # use "IID" normalizer, because we want portal_type to be lowercased.
-        prefix = id_normalize(context.portal_type);
+        prefix = id_normalize(context.portal_type)
         new_id = next_id(prefix)
         return '%s-%s' % (prefix, new_id)
+
 
 def renameAfterCreation(obj):
     # Can't rename without a subtransaction commit when using portal_factory
     transaction.savepoint(optimistic=True)
+
     # The id returned should be normalized already
     new_id = generateUniqueId(obj)
     obj.aq_inner.aq_parent.manage_renameObject(obj.id, new_id)

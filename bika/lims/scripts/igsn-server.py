@@ -31,7 +31,8 @@ class IDRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def get_id(self):
         batch_size = None
-        command = self.command.lower() 
+        command = self.command.lower()
+        data = []
         if command == 'get' and self.path.find('?') != -1:
             key, qs = self.path.split('?', 1)
             data = urlparse.parse_qs(qs)
@@ -46,11 +47,18 @@ class IDRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'text/plain')
         self.end_headers()
 
-        # TODO: THESE VALUES NEED TO BE PROVIDED BY BIKA:
+        # Check that the sample type is valid:
+        sample_type = data['SampleType'][0]
+        try:
+            # We don't actually want to use the value of the reverse mapping - just make sure it works.
+            cat.SampleType.reverse_mapping[sample_type]
+        except KeyError:
+            sample_type = cat.SampleType.Other
+
         sample = Sample.sample(
-            sample_type=cat.SampleType.IndividualSample,
+            sample_type=sample_type,
             user_code=self.user_code,
-            name='TestSample123',
+            name=data['SampleName'][0],
             material=cat.Material.Rock)
 
         igsn = self.client.register_sample(sample)

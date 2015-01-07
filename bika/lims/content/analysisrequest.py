@@ -594,6 +594,38 @@ schema = BikaSchema.copy() + Schema((
             showOn=True,
         ),
     ),
+    # Sample field
+    StringField(
+        'SampleName',  # ADAM: Copied from Client Sample Id, added required=1
+        required=1,
+        searchable=True,
+        mode="rw",
+        read_permission=permissions.View,
+        write_permission=permissions.ModifyPortalContent,
+        widget=StringWidget(
+            label=_('Sample Name'),
+            size=20,
+            render_own_label=True,
+            visible={'edit': 'visible',
+                     'view': 'visible',
+                     'add': 'edit',
+                     'secondary': 'disabled',
+                     'header_table': 'visible',
+                     'sample_registered': {'view': 'visible', 'edit': 'visible'},
+                     'to_be_sampled':     {'view': 'visible', 'edit': 'invisible'},
+                     'sampled':           {'view': 'visible', 'edit': 'invisible'},
+                     'to_be_preserved':   {'view': 'visible', 'edit': 'invisible'},
+                     'sample_due':        {'view': 'visible', 'edit': 'invisible'},
+                     'sample_prep':       {'view': 'visible', 'edit': 'invisible'},
+                     'sample_received':   {'view': 'visible', 'edit': 'invisible'},
+                     'attachment_due':    {'view': 'visible', 'edit': 'invisible'},
+                     'to_be_verified':    {'view': 'visible', 'edit': 'invisible'},
+                     'verified':          {'view': 'visible', 'edit': 'invisible'},
+                     'published':         {'view': 'visible', 'edit': 'invisible'},
+                     'invalid':           {'view': 'visible', 'edit': 'invisible'},
+                     },
+        ),
+    ),
     ReferenceField(
         'SampleMatrix',
         required=False,
@@ -2129,6 +2161,22 @@ class AnalysisRequest(BaseFolder):
         if sample:
             return sample.getClientReference()
         return self.Schema().getField('ClientReference').get(self)
+
+    security.declarePublic('setSampleName')
+
+    def setSampleName(self, value):
+        sample = self.getSample()
+        if sample and value:
+            sample.setSampleName(value)
+        self.Schema()['SampleName'].set(self, value)
+
+    security.declarePublic('getSampleName')
+
+    def getSampleName(self):
+        sample = self.getSample()
+        if sample:
+            return sample.getSampleName()
+        return self.Schema().getField('SampleName').get(self)
 
     security.declarePublic('setClientSampleID')
 
