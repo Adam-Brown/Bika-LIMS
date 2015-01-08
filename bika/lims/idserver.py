@@ -39,11 +39,13 @@ def idserver_generate_id(context, prefix, batch_size = None):
             exec 'reference = context.' + field.accessor + '()'
 
             # TODO: I don't know about other types. I think bool and ints can probably be
-            # accessed in the same was as strings...
+            # accessed in the same way as strings...
             value = ''
             if type(reference) is str:
                 value = context[field_name]
             else:
+                # TODO: This is working for SampleType but I don't know if 'title' is a
+                # reliable way of accessing this value
                 value = reference.title
 
             query[field_name] = value
@@ -195,11 +197,9 @@ def generateUniqueId(context):
         new_id = next_id(prefix)
         return '%s-%s' % (prefix, new_id)
 
-
 def renameAfterCreation(obj):
     # Can't rename without a subtransaction commit when using portal_factory
     transaction.savepoint(optimistic=True)
-
     # The id returned should be normalized already
     new_id = generateUniqueId(obj)
     obj.aq_inner.aq_parent.manage_renameObject(obj.id, new_id)

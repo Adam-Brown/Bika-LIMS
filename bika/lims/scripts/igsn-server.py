@@ -7,7 +7,7 @@ from sesarwslib.sample import Sample
 import sesarwslib.sesarwsclient as ws
 import os
 
-# TODO ADAM: Remove count_from
+
 class IDRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def run(self):
@@ -83,12 +83,9 @@ id-server [-n hostname] [-p port] [-l file] [-d file]
   Call the ID server with the key for which you want a count as path.
   E.g. calling
     http://<hostname>:<port>/Key
-  repeatedly will return 1, 2, 3, etc. To start counting at a particular
-  number (e.g. to skip a range of numbers), pass 'count_from' as a
-  parameter:
-    http://<hostname>:<port>/Key?count_from=104
-  This will return 104, or (if 104 has already been issued) the next
-  available number.
+  repeatedly will return 0001, 0002, 00003, etc (base-36 representation).
+  The sequence is handled by SESAR so ensure globally-unique IDs are
+  generated.
 
 '''%locals()
     sys.exit(0)
