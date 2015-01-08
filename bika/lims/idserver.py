@@ -34,7 +34,7 @@ def idserver_generate_id(context, prefix, batch_size = None):
             obj_str = str(field)  # e.g: '<Field id(string:rw)>'
             field_name = obj_str[obj_str.index(' ')+1:obj_str.index('(')]
 
-            # TODO: This feels dirty but I don't know how to dynamically call the accessor.
+            # TODO: This feels dirty but I don't know how to dynamically call the accessor?
             reference = None
             exec 'reference = context.' + field.accessor + '()'
 
@@ -45,7 +45,7 @@ def idserver_generate_id(context, prefix, batch_size = None):
                 value = context[field_name]
             else:
                 # TODO: This is working for SampleType but I don't know if 'title' is a
-                # reliable way of accessing this value
+                # reliable way of accessing the value for other non-simple types?
                 value = reference.title
 
             query[field_name] = value
