@@ -168,7 +168,7 @@ class DefaultBikaIdServer(object):
             new_id = next_id(prefix)
             return '%s-%s' % (prefix, new_id)
 
-    def get_external_id(self, context, prefix, batch_size=None):
+    def get_external_id(self, prefix, batch_size=None):
         """ Generate a new id using external ID server.
         """
         plone = self.context.portal_url.getPortalObject()
