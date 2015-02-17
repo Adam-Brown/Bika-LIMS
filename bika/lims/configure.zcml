@@ -27,6 +27,7 @@
   <include package=".controlpanel" />
   <include package=".exportimport" />
   <include package=".jsonapi" />
+  <include package=".indexers" />
   <include package=".locales" />
   <include package=".monkey" />
   <include package=".querystring" />
@@ -68,15 +69,6 @@
     layer="bika.lims.interfaces.IBikaLIMS"
   />
 
-  <!-- Product version retrieval -->
-  <browser:page
-    for="*"
-    name="get_product_version"
-    class="bika.lims.browser.ajaxGetProductVersion"
-    permission="zope.Public"
-    layer="bika.lims.interfaces.IBikaLIMS"
-  />
-
   <!-- New releases config -->
   <browser:page
     for="*"
@@ -85,5 +77,11 @@
     permission="zope.Public"
     layer="bika.lims.interfaces.IBikaLIMS"
   />
+
+    <subscriber
+      for="*
+           Products.DCWorkflow.interfaces.IAfterTransitionEvent"
+      handler="bika.lims.workflow.AfterTransitionEventHandler"
+    />
 
 </configure>

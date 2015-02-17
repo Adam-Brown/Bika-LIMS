@@ -494,10 +494,13 @@ class WorksheetFolderListingView(BikaListingView):
 
 class AddWorksheetView(BrowserView):
     """ Handler for the "Add Worksheet" button in Worksheet Folder.
-        If a template was selected, the worksheet is pre-populated here.
     """
 
     def __call__(self):
+
+        rc = getToolByName(self.context, REFERENCE_CATALOG)
+        wf = getToolByName(self.context, "portal_workflow")
+        pm = getToolByName(self.context, "portal_membership")
 
         # Validation
         form = self.request.form
@@ -505,21 +508,27 @@ class AddWorksheetView(BrowserView):
         template = self.request.get('template', '')
         instrument = self.request.get('instrument', '')
 
+        # Worksheets can be created in Batches or in the Worksheet Folder.
+        # If the form includes BatchUID, that will be our container.
+        batchuid = self.request.get('BatchUID', '')
+        if batchuid:
+            container = rc.lookupObject(batchuid)
+        else:
+            container = self.context
+
         if not analyst:
             message = _("Analyst must be specified.")
             self.context.plone_utils.addPortalMessage(message, 'info')
             self.request.RESPONSE.redirect(self.context.absolute_url())
             return
 
-        rc = getToolByName(self.context, REFERENCE_CATALOG)
-        wf = getToolByName(self.context, "portal_workflow")
-        pm = getToolByName(self.context, "portal_membership")
-
-        ws = _createObjectByType("Worksheet", self.context, tmpID())
+        ws = _createObjectByType("Worksheet", container, tmpID())
         ws.processForm()
 
-        # Set analyst and instrument
+        # Set analyst
         ws.setAnalyst(analyst)
+
+        # Set instrument
         if instrument:
             ws.setInstrument(instrument)
 
@@ -527,14 +536,10 @@ class AddWorksheetView(BrowserView):
         self.request['context_uid'] = ws.UID()
 
         # if no template was specified, redirect to blank worksheet
-        if not template:
-            ws.processForm()
-            self.request.RESPONSE.redirect(ws.absolute_url() + "/add_analyses")
-            return
-
-        wst = rc.lookupObject(template)
-        ws.setWorksheetTemplate(wst)
-        ws.applyWorksheetTemplate(wst)
+        if template:
+            wst = rc.lookupObject(template)
+            ws.setWorksheetTemplate(wst)
+            ws.applyWorksheetTemplate(wst)
 
         if ws.getLayout():
             self.request.RESPONSE.redirect(ws.absolute_url() + "/manage_results")
