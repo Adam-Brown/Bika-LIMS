@@ -11,7 +11,7 @@ from zope.component import getUtility, getAdapter
 from zope.interface import implements
 import re
 import transaction
-import zLOG;
+import zLOG
 
 
 class IDServerUnavailable(Exception):

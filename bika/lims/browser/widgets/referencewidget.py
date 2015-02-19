@@ -129,6 +129,15 @@ class ajaxReferenceWidgetSearch(BrowserView):
     """
 
     def __call__(self):
+
+        sampleTypes = self.context.bika_setup.bika_sampletypes.objectValues()
+
+        for sampleType in sampleTypes:
+            title = sampleType.Title()
+
+
+
+
         plone.protect.CheckAuthenticator(self.request)
         page = self.request['page']
         nr_rows = self.request['rows']
