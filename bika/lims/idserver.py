@@ -68,7 +68,7 @@ class DefaultBikaIdServer(object):
             sample_padding = self.context.bika_setup.getSampleIDPadding()
             ar_padding = self.context.bika_setup.getARIDPadding()
             sample_id = sample.getId()
-            sample_number = sample_id.split(s_prefix)[1]
+            sample_number = sample_id.replace(s_prefix, '')
             ar_number = sample.getLastARNumber()
             ar_number = ar_number and ar_number + 1 or 1
             # There is possibly stuff that require the '-Rx'.
@@ -164,7 +164,7 @@ class DefaultBikaIdServer(object):
                         new_id = new_id.zfill(int(padding))
                     return '%s%s-%s' % (prefix, year, new_id)
             # no prefix, use portal_type
-            prefix = id_normalize(portal_type);
+            prefix = id_normalize(portal_type)
             new_id = next_id(prefix)
             return '%s-%s' % (prefix, new_id)
 
